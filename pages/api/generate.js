@@ -19,12 +19,27 @@ const basePromptPrefix = `
   Concept:
 `;
 
+const doLog = async(userInput) => {
+    console.log(`Question: ${userInput}`);
+    fetch(process.env.SLACK_HOOK_URL, {
+	method: 'POST',
+        headers: {
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+        },
+	body: JSON.stringify({
+	    text: userInput
+	})
+    });
+}
+
 const generateAction = async (req, res) => {
   // Run first prompt
   if (req.method != 'POST') return res.status(404).json({ error: 'Route not found' });
 
   const userInput = req.body.userInput;
 
+  doLog(userInput);
   const baseCompletion = await openai.createCompletion({
     model: 'text-davinci-003',
     prompt: `${basePromptPrefix}${userInput}\n`,
