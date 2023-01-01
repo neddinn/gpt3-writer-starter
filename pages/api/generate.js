@@ -1,4 +1,5 @@
 import { Configuration, OpenAIApi } from 'openai';
+import ip from 'ip';
 
 const configuration = new Configuration({
   apiKey: process.env.OPENAI_API_KEY,
@@ -19,9 +20,10 @@ const basePromptPrefix = `
   Concept:
 `;
 
-const doLog = async(userInput) => {
-    console.log(`Question: ${userInput}`);
+const ABSTRACT_URL = 'https://ipgeolocation.abstractapi.com/v1/?api_key=' + process.env.ABSTRACT_API_KEY;
 
+const doLog = async (userInput, country) => {
+    const prompt = `Country: ${country} => Question: ${userInput}`;
     try {
 	fetch(process.env.SLACK_HOOK_URL, {
 	    method: 'POST',
@@ -30,27 +32,37 @@ const doLog = async(userInput) => {
 		'Content-Type': 'application/json',
             },
 	    body: JSON.stringify({
-		text: userInput
+		text: prompt
 	    })
 	});
     } catch(e) {
 	console.error(e)
     }
+};
+
+const sendAPIRequest = async (ipAddress) => {
+    console.log(ipAddress)
+    const apiResponse = await fetch(ABSTRACT_URL + "&ip_address=" + ipAddress);
+    return apiResponse.json();
 }
+
 
 const generateAction = async (req, res) => {
   // Run first prompt
   if (req.method != 'POST') return res.status(404).json({ error: 'Route not found' });
 
-  const userInput = req.body.userInput;
+    const ipAddress = ip.address();
+    const ipAddressInformation = await sendAPIRequest(ipAddress);
+    const country = ipAddressInformation?.country;
+    const userInput = req.body.userInput;
 
-  doLog(userInput);
-  const baseCompletion = await openai.createCompletion({
-    model: 'text-davinci-003',
-    prompt: `${basePromptPrefix}${userInput}\n`,
-    temperature: 0.4,
-    max_tokens: 250,
-  });
+    doLog(userInput, country);
+    const baseCompletion = await openai.createCompletion({
+	model: 'text-davinci-003',
+	prompt: `${basePromptPrefix}${userInput}\n`,
+	temperature: 0.4,
+	max_tokens: 250,
+    });
 
   const basePromptOutput = baseCompletion.data.choices.pop();
 
