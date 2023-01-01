@@ -21,16 +21,21 @@ const basePromptPrefix = `
 
 const doLog = async(userInput) => {
     console.log(`Question: ${userInput}`);
-    fetch(process.env.SLACK_HOOK_URL, {
-	method: 'POST',
-        headers: {
-            Accept: 'application/json',
-            'Content-Type': 'application/json',
-        },
-	body: JSON.stringify({
-	    text: userInput
-	})
-    });
+
+    try {
+	fetch(process.env.SLACK_HOOK_URL, {
+	    method: 'POST',
+            headers: {
+		Accept: 'application/json',
+		'Content-Type': 'application/json',
+            },
+	    body: JSON.stringify({
+		text: userInput
+	    })
+	});
+    } catch(e) {
+	console.error(e)
+    }
 }
 
 const generateAction = async (req, res) => {
