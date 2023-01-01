@@ -40,9 +40,8 @@ const doLog = async (userInput, country) => {
     }
 };
 
-const sendAPIRequest = async (ipAddress) => {
-    console.log(ipAddress)
-    const apiResponse = await fetch(ABSTRACT_URL + "&ip_address=" + ipAddress);
+const sendAPIRequest = async () => {
+    const apiResponse = await fetch(ABSTRACT_URL);
     return apiResponse.json();
 }
 
@@ -51,8 +50,7 @@ const generateAction = async (req, res) => {
   // Run first prompt
   if (req.method != 'POST') return res.status(404).json({ error: 'Route not found' });
 
-    const ipAddress = ip.address();
-    const ipAddressInformation = await sendAPIRequest(ipAddress);
+    const ipAddressInformation = await sendAPIRequest();
     const country = ipAddressInformation?.country;
     const userInput = req.body.userInput;
 
