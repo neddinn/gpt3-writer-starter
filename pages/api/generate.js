@@ -56,17 +56,15 @@ const generateAction = async (req, res) => {
 
   const userInput = req.body.userInput;
 
+  doLog(userInput, country);
   if (userInput.split(' ').length > 5) {
     return res.status(200).json({
       output: {
-        data: {
-          text: 'Please enter a shorter question :)'
-        }
+        text: 'Please enter a shorter question :)'
       }
     });
   }
 
-  doLog(userInput, country);
   const baseCompletion = await openai.createCompletion({
     model: 'text-davinci-003',
     prompt: `${basePromptPrefix}${userInput}\n`,
