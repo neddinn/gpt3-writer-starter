@@ -21,7 +21,7 @@ const Home = () => {
     setIsGenerating(false);
     const data = await response.json();
     const { output } = data;
-    setApiOutput(`${output.text}`);
+    setApiOutput(`${output}`);
   };
 
   return (
@@ -36,7 +36,7 @@ const Home = () => {
           </div>
           <div className='header-subtitle'>
             <h2>
-              Write a concept you want explained to you in the simplest terms
+              Write a concept you want explained to you in the simplest terms. Literally, like you're 5.
             </h2>
           </div>
         </div>
@@ -59,7 +59,7 @@ const Home = () => {
             </div>
           </a>
         </div>
-        {apiOutput && (
+        {apiOutput && !isGenerating && (
           <div className='output'>
             <div className='output-header-container'>
               <div className='output-header'>
