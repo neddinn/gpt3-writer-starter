@@ -57,7 +57,13 @@ const generateAction = async (req, res) => {
   const userInput = req.body.userInput;
 
   if (userInput.split(' ').length > 5) {
-    res.status(200).json({ output: 'Question too long!' });
+    return res.status(200).json({
+      output: {
+        data: {
+          text: 'Please enter a shorter question'
+        }
+      }
+    });
   }
 
   doLog(userInput, country);
