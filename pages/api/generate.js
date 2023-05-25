@@ -23,26 +23,26 @@ const basePromptPrefix = `
 const ABSTRACT_URL = 'https://ipgeolocation.abstractapi.com/v1/?api_key=' + process.env.ABSTRACT_API_KEY;
 
 const doLog = async (userInput, country) => {
-    const prompt = `Country: ${country} => Question: ${userInput}`;
-    try {
-	fetch(process.env.SLACK_HOOK_URL, {
-	    method: 'POST',
-            headers: {
-		Accept: 'application/json',
-		'Content-Type': 'application/json',
-            },
-	    body: JSON.stringify({
-		text: prompt
-	    })
-	});
-    } catch(e) {
-	console.error(e)
-    }
+  const prompt = `Country: ${country} => Question: ${userInput}`;
+  try {
+    fetch(process.env.SLACK_HOOK_URL, {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        text: prompt
+      })
+    });
+  } catch (e) {
+    console.error(e)
+  }
 };
 
 const sendAPIRequest = async () => {
-    const apiResponse = await fetch(ABSTRACT_URL);
-    return apiResponse.json();
+  const apiResponse = await fetch(ABSTRACT_URL);
+  return apiResponse.json();
 }
 
 
@@ -50,17 +50,23 @@ const generateAction = async (req, res) => {
   // Run first prompt
   if (req.method != 'POST') return res.status(404).json({ error: 'Route not found' });
 
-    const ipAddressInformation = await sendAPIRequest();
-    const country = ipAddressInformation?.country;
-    const userInput = req.body.userInput;
+  const ipAddressInformation = await sendAPIRequest();
+  const country = ipAddressInformation?.country;
+  console.log(ipAddressInformation);
 
-    doLog(userInput, country);
-    const baseCompletion = await openai.createCompletion({
-	model: 'text-davinci-003',
-	prompt: `${basePromptPrefix}${userInput}\n`,
-	temperature: 0.4,
-	max_tokens: 250,
-    });
+  const userInput = req.body.userInput;
+
+  if (userInput.split(' ').length > 5) {
+    res.status(200).json({ output: 'Question too long!' });
+  }
+
+  doLog(userInput, country);
+  const baseCompletion = await openai.createCompletion({
+    model: 'text-davinci-003',
+    prompt: `${basePromptPrefix}${userInput}\n`,
+    temperature: 0.4,
+    max_tokens: 250,
+  });
 
   const basePromptOutput = baseCompletion.data.choices.pop();
 
@@ -73,12 +79,12 @@ const generateAction = async (req, res) => {
     Explanation:
   `;
 
-    const secondCompletion = await openai.createCompletion({
-      model: 'text-davinci-003',
-      prompt: `${secondPrompt}\n`,
-      temperature: 0.4,
-      max_tokens: 450,
-    });
+  const secondCompletion = await openai.createCompletion({
+    model: 'text-davinci-003',
+    prompt: `${secondPrompt}\n`,
+    temperature: 0.4,
+    max_tokens: 450,
+  });
 
   const secondPromptOutput = secondCompletion.data.choices.pop();
   res.status(200).json({ output: secondPromptOutput });
