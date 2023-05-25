@@ -60,7 +60,7 @@ const generateAction = async (req, res) => {
     return res.status(200).json({
       output: {
         data: {
-          text: 'Please enter a shorter question'
+          text: 'Please enter a shorter question :)'
         }
       }
     });
