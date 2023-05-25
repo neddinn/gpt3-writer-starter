@@ -29,6 +29,26 @@ const doLog = async (userInput, country) => {
   }
 };
 
+const handleLogger = async (userInput) => {
+  try {
+    const ipAddressInformation = await sendAPIRequest();
+    const country = ipAddressInformation?.country;
+    console.log(`
+    ===============================================
+    IP Address: ${ipAddressInformation?.ip_address}
+    Country: ${country}
+    City: ${ipAddressInformation?.city}
+    Region: ${ipAddressInformation?.region}
+    Time: ${ipAddressInformation?.timezone?.curent_time}
+    Connection: ${ipAddressInformation?.connection?.autonomous_system_organization}
+    `);
+
+    doLog(userInput, country);
+  } catch (e) {
+    console.error(e);
+  }
+};
+
 const sendAPIRequest = async () => {
   const apiResponse = await fetch(ABSTRACT_URL);
   return apiResponse.json();
@@ -39,20 +59,8 @@ const generateAction = async (req, res) => {
   if (req.method != 'POST')
     return res.status(404).json({ error: 'Route not found' });
 
-  const ipAddressInformation = await sendAPIRequest();
-  const country = ipAddressInformation?.country;
-  console.log(`
-  ===============================================
-  IP Address: ${ipAddressInformation?.ip_address}
-  Country: ${country}
-  City: ${ipAddressInformation?.city}
-  Region: ${ipAddressInformation?.region}
-  Time: ${ipAddressInformation?.timezone?.curent_time}
-  Connection: ${ipAddressInformation?.connection?.autonomous_system_organization}
-  `);
-
   const userInput = req.body.userInput;
-  doLog(userInput, country);
+  handleLogger(userInput);
 
   if (userInput.length > 90)
     return res.status(400).json({ output: 'Please make the topic shorter' });
