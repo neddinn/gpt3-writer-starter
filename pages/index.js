@@ -11,6 +11,7 @@ const Home = () => {
   const handleGenerate = async () => {
     if (!prompt) return;
     setIsGenerating(true);
+    setApiOutput('');
     const response = await fetch('/api/generate', {
       method: 'POST',
       headers: {
@@ -18,11 +19,33 @@ const Home = () => {
       },
       body: JSON.stringify({ userInput: prompt }),
     });
+    if (!response.ok) {
+      return;
+    }
     setIsGenerating(false);
-    const data = await response.json();
-    const { output } = data;
-    setApiOutput(`${output}`);
+    const data = response.body;
+    if (!data) {
+      return;
+    }
+    const reader = data.getReader();
+    const decoder = new TextDecoder();
+    let done = false;
+
+    while (!done) {
+      const {value, done: readDone} = await reader.read()
+      done = readDone
+      const chunkValue = decoder.decode(value);
+      setApiOutput((prev) => prev + chunkValue);
+    }
+
   };
+
+  const handleKeyDown = async (e) => {
+    if (e.keyCode === 13 && !e.shiftKey) {
+      e.preventDefault();
+      await handleGenerate();
+    }
+  }
 
   return (
     <div className='root'>
@@ -46,6 +69,7 @@ const Home = () => {
           className='prompt-box'
           placeholder='start typing here..'
           onChange={(e) => setPrompt(e.target.value)}
+          onKeyDown={handleKeyDown}
           value={prompt}
         ></textarea>
         <div className='prompt-buttons'>

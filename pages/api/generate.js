@@ -1,5 +1,8 @@
+
+
 import { Configuration, OpenAIApi } from 'openai';
 import ip from 'ip';
+import { openAIStream  } from '../../utils/openaistream';
 
 const configuration = new Configuration({
   apiKey: process.env.OPENAI_API_KEY,
@@ -54,22 +57,26 @@ const sendAPIRequest = async () => {
   return apiResponse.json();
 };
 
-const generateAction = async (req, res) => {
+export const config = {
+  runtime: "edge"
+};
+
+const handler = async (req) => {
   // Run first prompt
-  if (req.method != 'POST')
-    return res.status(404).json({ error: 'Route not found' });
+  const { userInput } = (await req.json())
+  if (!userInput) {
+    return new Response("No prompt in the request", { status: 400 });
+  }
 
-  const userInput = req.body.userInput;
-  handleLogger(userInput);
 
-  if (userInput.length > 90)
+  if (userInput?.length > 90)
     return res.status(400).json({ output: 'Please make the topic shorter' });
 
   const systemPrompt = `You are an assistant. You are able to take a topic and explain it
   in very simple to understand terms like you're explaining to someone with no knowledge at all about it, you make it as detailed as possible,
-  with good examples and simple and practical examples where applicable, and you end with a summary.`;
+  with good examples and simple and practical examples where applicable, and you end with a summary. Remember that you use very simple language to explain.`;
 
-  const baseCompletion = await openai.createChatCompletion({
+  const payload = {
     model: 'gpt-3.5-turbo',
     messages: [
       { role: 'system', content: systemPrompt },
@@ -83,19 +90,11 @@ const generateAction = async (req, res) => {
     ],
     temperature: 0.5,
     max_tokens: 1000,
-  });
+    stream: true
+  };
 
-  const basePromptOutput = baseCompletion.data.choices.pop();
-  const text = basePromptOutput?.message?.content;
-
-  console.log(`
-  User Input: ${userInput}
-
-  Output: ${text}
-  ============================================
-  `);
-
-  res.status(200).json({ output: text });
+  const stream = await openAIStream(payload);
+  return new Response(stream);
 };
 
-export default generateAction;
+export default handler;
